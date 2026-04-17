@@ -15,9 +15,13 @@ Upload a photograph of an object placed on an A4 calibration sheet, extract its 
   - [Backend tests](#backend-tests)
   - [Frontend unit tests](#frontend-unit-tests)
   - [End-to-end tests](#end-to-end-tests)
-- [Production build](#production-build)
-  - [Docker Compose (recommended)](#docker-compose-recommended)
-  - [Manual build](#manual-build)
+- [Docker Compose](#docker-compose)
+  - [Development](#development)
+  - [Production](#production)
+- [GitHub Codespaces](#github-codespaces)
+- [Production build (manual)](#production-build-manual)
+  - [Manual build — Backend](#manual-build--backend)
+  - [Manual build — Frontend](#manual-build--frontend)
 - [Environment variables](#environment-variables)
 - [Project structure](#project-structure)
 
@@ -155,41 +159,108 @@ An HTML report is generated at `playwright-report/index.html`.
 
 ---
 
-## Production build
+## Docker Compose
 
-### Docker Compose (recommended)
+Both compose files live at the repo root. Choose the one that matches your workflow.
 
-This is the simplest path. Docker Compose builds both services, wires them together and serves the frontend via nginx.
+---
+
+### Development
+
+`docker-compose.dev.yml` mounts your local source folders into the containers so changes are reflected immediately — no rebuild needed.
+
+| Service | URL | Notes |
+|---|---|---|
+| Backend (uvicorn --reload) | http://localhost:8000 | Hot-reload on every Python file save |
+| Frontend (Vite dev server) | http://localhost:3000 | HMR on every TypeScript/CSS save |
 
 ```bash
-# From the repo root
-docker compose up --build
+# From the repo root — start both services
+docker compose -f docker-compose.dev.yml up --build
+
+# Run in the background
+docker compose -f docker-compose.dev.yml up --build -d
+
+# Tail the logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Stop and remove containers
+docker compose -f docker-compose.dev.yml down
 ```
 
-| Service | URL |
-|---|---|
-| Frontend (nginx) | http://localhost:3000 |
-| Backend (uvicorn) | http://localhost:8000 |
+> **First run**: `npm install` runs automatically inside the frontend container, so the initial startup takes a little longer.
 
-The nginx config proxies `/api/*` to the backend, so the frontend only needs to talk to port 3000.
+---
 
-To run in the background:
+### Production
+
+`docker-compose.yml` builds optimised images — the frontend is compiled by Vite and served via nginx.
+
+| Service | URL | Notes |
+|---|---|---|
+| Frontend (nginx) | http://localhost:3000 | Serves the Vite production bundle |
+| Backend (uvicorn) | http://localhost:8000 | nginx proxies `/api/*` to this service |
 
 ```bash
+# From the repo root — build images and start both services
+docker compose up --build
+
+# Run in the background
 docker compose up --build -d
 
-# View logs
+# Tail the logs
 docker compose logs -f
 
-# Stop
+# Stop and remove containers
 docker compose down
 ```
 
 ---
 
-### Manual build
+## GitHub Codespaces
 
-#### Backend
+GitHub Codespaces provides a fully configured cloud dev environment directly in the browser — no local setup required.
+
+### Getting started
+
+1. On the repository homepage, click **Code → Codespaces → Create codespace on main** (or your branch).
+2. Wait for the codespace to finish provisioning (usually under two minutes).
+3. A VS Code editor opens in your browser with the repo already checked out.
+
+### Running development compose in a codespace
+
+```bash
+# Inside the codespace terminal
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+Codespaces automatically forwards the exposed ports. Open the **Ports** panel (bottom status bar → *Ports*) to find the forwarded URLs for port **3000** (frontend) and port **8000** (backend). Click the globe icon next to each port to open it in a new browser tab.
+
+> **Tip:** Set ports to *Public* visibility in the Ports panel if you want to share a preview URL with a team-mate.
+
+### Running production compose in a codespace
+
+```bash
+docker compose up --build -d
+```
+
+The same port-forwarding applies — port **3000** serves the nginx-bundled frontend and **8000** serves the API.
+
+### Stopping services
+
+```bash
+# Development
+docker compose -f docker-compose.dev.yml down
+
+# Production
+docker compose down
+```
+
+---
+
+## Production build (manual)
+
+### Manual build — Backend
 
 ```bash
 cd backend
@@ -207,7 +278,7 @@ gunicorn app.main:app -k uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8000 --workers 4
 ```
 
-#### Frontend
+### Manual build — Frontend
 
 ```bash
 cd frontend
