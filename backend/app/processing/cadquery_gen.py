@@ -31,7 +31,10 @@ def generate_model(
         import cadquery as cq
     except ImportError as exc:
         raise RuntimeError(
-            "cadquery is not installed. Run: pip install cadquery"
+            "CadQuery could not be loaded. "
+            f"Underlying import error: {exc}. "
+            "If you are running in Docker, rebuild the backend image so the required "
+            "system libraries are installed."
         ) from exc
 
     if len(points) < 3:
