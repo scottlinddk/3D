@@ -11,7 +11,7 @@ const config: Config = {
   transform: {
     "^.+\\.(ts|tsx)$": ["ts-jest", { tsconfig: { jsx: "react-jsx" } }],
   },
-  testMatch: ["**/__tests__/**/*.{ts,tsx}", "**/*.test.{ts,tsx}"],
+  testMatch: ["**/__tests__/**/*.{test,spec}.{ts,tsx}", "**/*.test.{ts,tsx}"],
   coverageDirectory: "coverage",
 };
 
