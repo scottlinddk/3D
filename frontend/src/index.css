@@ -9,8 +9,10 @@
   }
 
   body {
-    @apply font-sans text-gray-900;
+    @apply font-sans text-gray-900 dark:text-gray-50;
+    @apply bg-surface-page dark:bg-surface-page-dark;
     min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   * {

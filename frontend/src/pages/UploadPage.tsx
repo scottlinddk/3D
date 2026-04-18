@@ -20,13 +20,14 @@ export function UploadPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col items-center px-6 py-20 text-center">
       <Badge variant="info" className="mb-4">Step 1 of 4</Badge>
-      <h1 className="mb-3 text-5xl font-extrabold tracking-tight text-gray-900">
+
+      <h1 className="mb-3 text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
         Photo to&nbsp;
         <span className="bg-gradient-to-r from-brand-pink via-brand-purple to-brand-blue bg-clip-text text-transparent">
           3-D Model.
         </span>
       </h1>
-      <p className="mb-10 text-lg text-gray-500">
+      <p className="mb-10 text-lg text-gray-500 dark:text-gray-400">
         Place your object on a white A4 sheet, photograph it from above, then upload.
       </p>
 
@@ -41,7 +42,7 @@ export function UploadPage() {
           <DropZone onFile={setFile} disabled={isPending} />
 
           {error && (
-            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
               {(error as Error).message}
             </p>
           )}
@@ -58,15 +59,18 @@ export function UploadPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-16 grid grid-cols-3 gap-6 text-left">
+      <div className="mt-16 grid grid-cols-3 gap-5 text-left">
         {[
           { title: "Calibration", body: "Place the object on a standard A4 sheet so we can compute real-world scale." },
           { title: "Contour extraction", body: "OpenCV detects the object outline and simplifies it to key waypoints." },
           { title: "3-D export", body: "CadQuery extrudes the profile into a STEP or STL file ready for CAD software." },
         ].map((f) => (
-          <div key={f.title} className="rounded-xl border border-white/60 bg-white/60 p-5 backdrop-blur-sm">
-            <h3 className="mb-1 font-semibold text-gray-800">{f.title}</h3>
-            <p className="text-sm text-gray-500">{f.body}</p>
+          <div
+            key={f.title}
+            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:border-[#2a2a2a] dark:bg-[#1c1c1c]"
+          >
+            <h3 className="mb-1 font-semibold text-gray-800 dark:text-gray-100">{f.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{f.body}</p>
           </div>
         ))}
       </div>
