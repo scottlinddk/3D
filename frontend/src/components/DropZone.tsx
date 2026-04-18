@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { UploadCloud, X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Camera, UploadCloud, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
@@ -15,6 +15,8 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const validate = (file: File): string | null => {
     if (!file.type.startsWith("image/")) return "Only image files are accepted.";
@@ -54,12 +56,14 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
     setPreview(null);
     setFileName(null);
     setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   return (
     <div className="w-full">
       {!preview ? (
-        <label
+        <div
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 transition-all",
             dragOver
@@ -73,6 +77,7 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
         >
           <UploadCloud className="mb-4 h-12 w-12 text-gray-300" />
           <p className="mb-1 text-base font-semibold text-gray-700">
@@ -81,17 +86,51 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
           <p className="mb-4 text-sm text-gray-400">
             JPEG, PNG, WebP or TIFF · max {maxMb} MB
           </p>
-          <Button variant="outline" size="sm" type="button" disabled={disabled}>
-            Browse files
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              disabled={disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              Browse files
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              disabled={disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
+            >
+              <Camera className="mr-1 h-4 w-4" />
+              Take photo
+            </Button>
+          </div>
           <input
+            ref={fileInputRef}
             type="file"
             accept={accept}
             className="sr-only"
             onChange={onInput}
             disabled={disabled}
           />
-        </label>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={onInput}
+            disabled={disabled}
+          />
+        </div>
       ) : (
         <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white/80">
           <img src={preview} alt="preview" className="max-h-72 w-full object-contain" />
