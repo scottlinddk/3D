@@ -108,7 +108,7 @@ export function CurveEditor({ contour, onChange }: CurveEditorProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-gray-500">{points.length} points</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{points.length} points</span>
         <Button variant="outline" size="sm" onClick={reset}>Reset</Button>
         {splineDisplay && (
           <Button
@@ -124,7 +124,7 @@ export function CurveEditor({ contour, onChange }: CurveEditorProps) {
             Remove point {selected}
           </Button>
         )}
-        <span className="ml-auto text-xs text-gray-400">
+        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
           Click SVG to add · drag handle to move
         </span>
       </div>
@@ -132,13 +132,12 @@ export function CurveEditor({ contour, onChange }: CurveEditorProps) {
       <svg
         ref={svgRef}
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-        className="w-full rounded-xl border border-gray-100 bg-white/60 shadow-card cursor-crosshair"
+        className="w-full cursor-crosshair rounded-xl border border-gray-200 bg-white shadow-card dark:border-[#2a2a2a] dark:bg-[#252525]"
         onPointerMove={onPointerMove}
         onPointerUp={() => (dragging.current = null)}
         onPointerLeave={() => (dragging.current = null)}
         onClick={addPoint}
       >
-        {/* Spline overlay */}
         {showSpline && splineDisplay && (
           <path
             d={toSvgPath(splineDisplay)}
@@ -149,10 +148,8 @@ export function CurveEditor({ contour, onChange }: CurveEditorProps) {
           />
         )}
 
-        {/* Polyline */}
         <path d={toSvgPath(display)} fill="rgba(99,102,241,0.08)" stroke="#6366f1" strokeWidth={2} />
 
-        {/* Handles */}
         {display.map((pt, i) => (
           <circle
             key={i}
@@ -176,7 +173,7 @@ export function CurveEditor({ contour, onChange }: CurveEditorProps) {
         ))}
       </svg>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         Scale: {contour.scale.toFixed(2)} px/mm · image {contour.image_width}×
         {contour.image_height}
       </p>

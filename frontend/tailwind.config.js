@@ -5,28 +5,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand palette matching the gradient screenshot aesthetic
         brand: {
           pink: "#f472b6",
           blue: "#60a5fa",
           purple: "#a78bfa",
           indigo: "#818cf8",
+          orange: "#e85d26",
+          green: "#a3e635",
         },
+        // Semantic surface tokens (referenced in components via dark: prefix)
         surface: {
-          DEFAULT: "rgba(255,255,255,0.85)",
-          dark: "#0a0a0f",
+          DEFAULT: "#ffffff",
+          secondary: "#f7f8fa",
+          dark: "#1c1c1c",
+          "dark-secondary": "#252525",
+          page: "#edf0f7",
+          "page-dark": "#0f0f0f",
         },
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-mesh":
-          "linear-gradient(135deg, #fce7f3 0%, #dbeafe 50%, #ede9fe 100%)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        card: "0 4px 24px 0 rgba(0,0,0,0.06)",
+        card: "0 2px 12px 0 rgba(0,0,0,0.06)",
+        "card-dark": "0 2px 12px 0 rgba(0,0,0,0.4)",
         glow: "0 0 40px 10px rgba(139,92,246,0.3)",
       },
       backdropBlur: {
