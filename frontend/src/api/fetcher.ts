@@ -14,7 +14,6 @@ async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  isFormData?: boolean,
 ): Promise<T> {
   const headers: Record<string, string> = {};
   let bodyInit: BodyInit | undefined;
