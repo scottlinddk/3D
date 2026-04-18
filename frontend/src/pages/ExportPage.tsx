@@ -19,6 +19,14 @@ export function ExportPage() {
 
   const { mutateAsync, isPending, data, error, reset } = useCreateModelMutation();
 
+  // Ensure the download URL is always same-origin (path only). If the backend
+  // returns an absolute URL with an internal hostname (e.g. http://backend:8000/...)
+  // the browser can't resolve it and the download attribute is ignored for
+  // cross-origin links. Extracting just the pathname fixes both problems.
+  const downloadUrl = data?.url
+    ? (() => { try { return new URL(data.url).pathname; } catch { return data.url; } })()
+    : undefined;
+
   const points = state?.points ?? [];
 
   const generate = async () => {
@@ -103,7 +111,7 @@ export function ExportPage() {
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
                 Model generated successfully!
               </p>
-              <a href={data.url} download={data.filename}>
+              <a href={downloadUrl} download={data.filename}>
                 <Button variant="gradient" className="w-full gap-2">
                   <Download className="h-4 w-4" />
                   Download {data.filename}
