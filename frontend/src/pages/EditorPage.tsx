@@ -17,15 +17,16 @@ export function EditorPage() {
   const points = editedPoints ?? contour?.points ?? [];
 
   const proceed = () => {
-    const state = { points, token };
-    navigate(`/export/${token}`, { state });
+    navigate(`/export/${token}`, { state: { points, token } });
   };
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-16">
       <Badge variant="info" className="mb-4">Step 3 of 4</Badge>
-      <h1 className="mb-2 text-4xl font-extrabold text-gray-900">Curve Editor</h1>
-      <p className="mb-8 text-gray-500">
+      <h1 className="mb-2 text-4xl font-extrabold text-gray-900 dark:text-gray-50">
+        Curve Editor
+      </h1>
+      <p className="mb-8 text-gray-500 dark:text-gray-400">
         Drag handles to adjust the profile. Click the canvas to add new points.
       </p>
 
@@ -38,23 +39,20 @@ export function EditorPage() {
         </CardHeader>
         <CardContent>
           {isLoading && (
-            <div className="flex items-center gap-3 py-8 text-gray-500">
+            <div className="flex items-center gap-3 py-8 text-gray-500 dark:text-gray-400">
               <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-brand-purple border-t-transparent" />
               Loading contour…
             </div>
           )}
 
           {error && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
+            <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
               {(error as Error).message}
             </div>
           )}
 
           {contour && (
-            <CurveEditor
-              contour={contour}
-              onChange={(pts) => setEditedPoints(pts)}
-            />
+            <CurveEditor contour={contour} onChange={(pts) => setEditedPoints(pts)} />
           )}
         </CardContent>
       </Card>

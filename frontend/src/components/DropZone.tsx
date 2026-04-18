@@ -67,8 +67,8 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 transition-all",
             dragOver
-              ? "border-brand-purple bg-purple-50"
-              : "border-gray-200 bg-white/60 hover:border-brand-blue hover:bg-blue-50/40",
+              ? "border-brand-purple bg-purple-50 dark:bg-purple-900/10"
+              : "border-gray-200 bg-gray-50 hover:border-brand-blue hover:bg-blue-50/40 dark:border-[#2a2a2a] dark:bg-[#252525] dark:hover:border-brand-blue dark:hover:bg-blue-900/10",
             disabled && "pointer-events-none opacity-50",
           )}
           onDragOver={(e) => {
@@ -79,11 +79,11 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
           onDrop={onDrop}
           onClick={() => fileInputRef.current?.click()}
         >
-          <UploadCloud className="mb-4 h-12 w-12 text-gray-300" />
-          <p className="mb-1 text-base font-semibold text-gray-700">
+          <UploadCloud className="mb-4 h-12 w-12 text-gray-300 dark:text-gray-600" />
+          <p className="mb-1 text-base font-semibold text-gray-700 dark:text-gray-200">
             Drag & drop your photo here
           </p>
-          <p className="mb-4 text-sm text-gray-400">
+          <p className="mb-4 text-sm text-gray-400 dark:text-gray-500">
             JPEG, PNG, WebP or TIFF · max {maxMb} MB
           </p>
           <div className="flex gap-2">
@@ -132,18 +132,21 @@ export function DropZone({ onFile, accept = "image/*", maxMb = 20, disabled }: D
           />
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white/80">
+        <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-[#2a2a2a] dark:bg-[#1c1c1c]">
           <img src={preview} alt="preview" className="max-h-72 w-full object-contain" />
-          <div className="flex items-center justify-between border-t border-gray-100 bg-white/80 px-4 py-2">
-            <span className="truncate text-sm text-gray-600">{fileName}</span>
-            <button onClick={clear} className="ml-2 rounded-full p-1 hover:bg-gray-100">
-              <X className="h-4 w-4 text-gray-400" />
+          <div className="flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2 dark:border-[#2a2a2a] dark:bg-[#1c1c1c]">
+            <span className="truncate text-sm text-gray-600 dark:text-gray-300">{fileName}</span>
+            <button
+              onClick={clear}
+              className="ml-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-[#252525]"
+            >
+              <X className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </button>
           </div>
         </div>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-500 dark:text-red-400">{error}</p>}
     </div>
   );
 }
