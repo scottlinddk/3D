@@ -30,6 +30,7 @@ async function request<T>(
     const detail = await res.json().catch(() => ({ detail: res.statusText }));
     throw new ApiError(res.status, detail?.detail ?? res.statusText);
   }
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -40,12 +41,25 @@ export const api = {
     return request<import("./schemas").UploadResponse>("POST", "/api/upload", fd);
   },
 
-  contour: (token: string) =>
-    request<import("./schemas").ContourResponse>("GET", `/api/contour/${token}`),
+  contour: (token: string, paperSize = "A4") =>
+    request<import("./schemas").ContourResponse>(
+      "GET",
+      `/api/contour/${token}?paper_size=${encodeURIComponent(paperSize)}`,
+    ),
 
   status: (token: string) =>
     request<import("./schemas").StatusResponse>("GET", `/api/status/${token}`),
 
   createModel: (body: import("./schemas").ModelRequest) =>
     request<import("./schemas").ModelResponse>("POST", "/api/model", body),
+
+  // History
+  saveHistory: (body: import("./schemas").HistorySaveRequest) =>
+    request<import("./schemas").HistoryEntry>("POST", "/api/history", body),
+
+  listHistory: () =>
+    request<import("./schemas").HistoryEntry[]>("GET", "/api/history"),
+
+  deleteHistory: (id: number) =>
+    request<void>("DELETE", `/api/history/${id}`),
 };
