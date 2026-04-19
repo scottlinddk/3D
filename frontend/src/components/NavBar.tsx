@@ -9,6 +9,7 @@ const steps = [
   { label: "Calibrate", path: "/calibrate" },
   { label: "Edit", path: "/edit" },
   { label: "Export", path: "/export" },
+  { label: "History", path: "/history" },
 ];
 
 export function NavBar() {

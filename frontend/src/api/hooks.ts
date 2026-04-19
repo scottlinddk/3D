@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./fetcher";
-import type { ModelRequest } from "./schemas";
+import type { ModelRequest, HistorySaveRequest } from "./schemas";
 
 export function useUploadMutation() {
   return useMutation({
@@ -8,10 +8,10 @@ export function useUploadMutation() {
   });
 }
 
-export function useContourQuery(token: string | null) {
+export function useContourQuery(token: string | null, paperSize = "A4") {
   return useQuery({
-    queryKey: ["contour", token],
-    queryFn: () => api.contour(token!),
+    queryKey: ["contour", token, paperSize],
+    queryFn: () => api.contour(token!, paperSize),
     enabled: token !== null,
     staleTime: Infinity,
     retry: false,
@@ -30,5 +30,31 @@ export function useStatusQuery(token: string | null, enabled = true) {
 export function useCreateModelMutation() {
   return useMutation({
     mutationFn: (body: ModelRequest) => api.createModel(body),
+  });
+}
+
+// ── History ──────────────────────────────────────────────────────────────────
+
+export function useHistoryQuery() {
+  return useQuery({
+    queryKey: ["history"],
+    queryFn: () => api.listHistory(),
+    staleTime: 30_000,
+  });
+}
+
+export function useSaveHistoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: HistorySaveRequest) => api.saveHistory(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["history"] }),
+  });
+}
+
+export function useDeleteHistoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.deleteHistory(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["history"] }),
   });
 }

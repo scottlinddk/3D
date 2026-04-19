@@ -9,15 +9,15 @@ from app.main import app
 
 
 def make_test_image(width: int = 640, height: int = 480) -> bytes:
-    """Create a synthetic image: white background, large dark rectangle as calibration sheet,
-    small bright ellipse as object."""
-    img = np.ones((height, width, 3), dtype=np.uint8) * 200
+    """Synthetic image that mirrors real-world usage:
+    dark background → white A4 paper rectangle → dark object on paper."""
+    img = np.ones((height, width, 3), dtype=np.uint8) * 60   # dark background
 
-    # Calibration sheet (large rectangle)
-    cv2.rectangle(img, (50, 50), (590, 430), (30, 30, 30), -1)
+    # White calibration sheet (A4 paper)
+    cv2.rectangle(img, (50, 30), (590, 450), (240, 240, 240), -1)
 
-    # Object (bright ellipse on top of the dark sheet)
-    cv2.ellipse(img, (320, 240), (80, 120), 0, 0, 360, (220, 220, 220), -1)
+    # Dark object (tool) placed on the white paper
+    cv2.ellipse(img, (320, 240), (80, 120), 0, 0, 360, (30, 30, 30), -1)
 
     _, buf = cv2.imencode(".jpg", img)
     return buf.tobytes()

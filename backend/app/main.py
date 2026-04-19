@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import upload, contour, model, status
+from app.api import upload, contour, model, status, history
+from app.storage.db import init_db
 
 app = FastAPI(
     title="Curve Extraction API",
@@ -20,11 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+init_db()
+
 _PREFIX = "/api"
 app.include_router(upload.router, prefix=_PREFIX, tags=["Upload"])
 app.include_router(contour.router, prefix=_PREFIX, tags=["Contour"])
 app.include_router(model.router, prefix=_PREFIX, tags=["Model"])
 app.include_router(status.router, prefix=_PREFIX, tags=["Status"])
+app.include_router(history.router, prefix=_PREFIX, tags=["History"])
 
 
 @app.get("/health", tags=["Health"])

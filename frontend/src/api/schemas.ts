@@ -1,5 +1,7 @@
 // Hand-written types matching the backend's OpenAPI schema.
-// After the backend is running, regenerate via: npm run generate-api
+
+export const PAPER_SIZES = ["A3", "A4", "A5", "A6", "Letter", "Legal", "Tabloid"] as const;
+export type PaperSize = (typeof PAPER_SIZES)[number];
 
 export interface UploadResponse {
   token: string;
@@ -20,6 +22,7 @@ export interface ContourResponse {
   image_width: number;
   image_height: number;
   spline_points?: [number, number][] | null;
+  paper_size: PaperSize;
 }
 
 export interface ModelRequest {
@@ -34,4 +37,26 @@ export interface ModelResponse {
   url: string;
   format: string;
   filename: string;
+}
+
+// ── History ──────────────────────────────────────────────────────────────────
+
+export interface HistorySaveRequest {
+  name?: string;
+  points: [number, number][];
+  height: number;
+  revolve: boolean;
+  format: "stl" | "step";
+  paper_size: PaperSize;
+}
+
+export interface HistoryEntry {
+  id: number;
+  name: string;
+  points: [number, number][];
+  height: number;
+  revolve: boolean;
+  format: string;
+  paper_size: string;
+  created_at: string;
 }
