@@ -106,10 +106,19 @@ setup_env() {
 
     # ── Init DB ──────────────────────────────────────────────────────────
     info "Initialising database…"
+    local EXPECTED_DB="$DATA_DIR/history.db"
+    local FALLBACK_DB="/tmp/curve_extraction/history.db"
     CURVEEXTRACT_DATA_DIR="$DATA_DIR" PYTHONPATH="$DIR/backend" \
         "$VENV/bin/python" -c "from app.storage.db import init_db; init_db()"
-    success "Database ready at $DATA_DIR/history.db"
 
+    if [[ -f "$EXPECTED_DB" ]]; then
+        success "Database ready at $EXPECTED_DB"
+    elif [[ -f "$FALLBACK_DB" ]]; then
+        warn "Backend ignored CURVEEXTRACT_DATA_DIR; database was created at $FALLBACK_DB"
+        success "Database ready at $FALLBACK_DB"
+    else
+        die "Database initialisation completed but no database file was found at $EXPECTED_DB or $FALLBACK_DB"
+    fi
     # ── systemd service ──────────────────────────────────────────────────
     info "Creating systemd service: $SERVICE …"
     sudo tee "/etc/systemd/system/$SERVICE.service" > /dev/null << EOF
