@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { GradientBackground } from "@/components/GradientBackground";
 import { NavBar } from "@/components/NavBar";
+import { BackendConfigBanner } from "@/components/BackendConfigBanner";
 import { UploadPage } from "@/pages/UploadPage";
 import { CalibrationPage } from "@/pages/CalibrationPage";
 import { EditorPage } from "@/pages/EditorPage";
@@ -13,6 +14,7 @@ export default function App() {
     <>
       <GradientBackground />
       <NavBar />
+      <BackendConfigBanner />
       <Routes>
         <Route path="/" element={<UploadPage />} />
         <Route path="/calibrate/:token" element={<CalibrationPage />} />

@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE ?? "";
+import { getApiBase } from "@/lib/apiBase";
 
 export class ApiError extends Error {
   constructor(
@@ -15,6 +15,7 @@ async function request<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
+  const BASE = getApiBase();
   const headers: Record<string, string> = {};
   let bodyInit: BodyInit | undefined;
 
