@@ -167,8 +167,8 @@ EOF
 }
 
 # ── Set up both environments ───────────────────────────────────────────────
-setup_env prod development main 8000
-setup_env dev  development development 8001
+setup_env prod main 8000
+setup_env dev  development 8001
 
 # ── Sudoers rule for Actions runner ───────────────────────────────────────
 step "Sudoers (passwordless service restart for runner)"
