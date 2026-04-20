@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-_DB_PATH = Path("/tmp/curve_extraction/history.db")
+_DATA_DIR = Path(os.environ.get("CURVEEXTRACT_DATA_DIR", Path.home() / ".curveextract"))
+_DB_PATH = _DATA_DIR / "history.db"
 
 
 def _connect() -> sqlite3.Connection:
