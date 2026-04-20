@@ -78,6 +78,7 @@ setup_env() {
     step "Environment: $ENV (branch=$BRANCH, port=$PORT)"
 
     # ── Clone or update ──────────────────────────────────────────────────
+    mkdir -p "$INSTALL_BASE"
     if [[ -d "$DIR/.git" ]]; then
         info "Updating existing clone…"
         git -C "$DIR" fetch origin "$BRANCH"
