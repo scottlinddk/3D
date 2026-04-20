@@ -96,13 +96,23 @@ setup_env() {
     "$VENV/bin/pip" install -q --upgrade pip
 
     info "Installing requirements (may take a while on ARM)…"
-    if "$VENV/bin/pip" install -q -r "$DIR/backend/requirements.txt" 2>/dev/null; then
+    pip_log="$(mktemp)"
+    if "$VENV/bin/pip" install -q -r "$DIR/backend/requirements.txt" >"$pip_log" 2>&1; then
+        rm -f "$pip_log"
         success "Requirements installed."
     else
-        warn "cadquery failed on ARM — retrying without it (STEP export disabled)."
-        grep -v '^cadquery' "$DIR/backend/requirements.txt" > /tmp/_req.txt
-        "$VENV/bin/pip" install -q -r /tmp/_req.txt
-        warn "Only STL export will work (client-side). STEP is skipped."
+        if grep -q '^cadquery' "$DIR/backend/requirements.txt" && grep -qi 'cadquery' "$pip_log"; then
+            warn "cadquery failed on ARM — retrying without it (STEP export disabled)."
+            req_no_cadquery="$(mktemp)"
+            grep -v '^cadquery' "$DIR/backend/requirements.txt" > "$req_no_cadquery"
+            "$VENV/bin/pip" install -q -r "$req_no_cadquery"
+            rm -f "$req_no_cadquery" "$pip_log"
+            warn "Only STL export will work (client-side). STEP is skipped."
+        else
+            pip_error="$(cat "$pip_log")"
+            rm -f "$pip_log"
+            die "Failed to install Python requirements:\n$pip_error"
+        fi
     fi
 
     # ── Data directory ───────────────────────────────────────────────────
