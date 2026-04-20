@@ -32,8 +32,11 @@ jobs:
       - name: Initialise database
         run: |
           cd ~/curveextract/dev/backend
-          CURVEEXTRACT_DATA_DIR=/var/lib/curveextract/dev \
-            ../.venv/bin/python -c "from app.storage.db import init_db; init_db()"
+          if grep -R -n "/tmp/curve_extraction" app; then
+            echo "::error::Backend storage still uses hard-coded /tmp/curve_extraction paths and does not support CURVEEXTRACT_DATA_DIR. Refusing to deploy a dev instance that would share DB/uploads with other environments."
+            exit 1
+          fi
+          ../.venv/bin/python -c "from app.storage.db import init_db; init_db()"
 
       - name: Restart service
         run: sudo systemctl restart curveextract-dev
