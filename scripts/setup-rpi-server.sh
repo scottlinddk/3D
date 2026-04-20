@@ -51,12 +51,18 @@ done
 [[ -n "$PYTHON" ]] || die "Python 3.11+ required. Install: sudo apt install python3.11"
 success "Python: $($PYTHON --version)"
 
+if [[ "$PYTHON" == "python3" ]]; then
+    PYTHON_VENV_PACKAGE="python3-venv"
+else
+    PYTHON_VENV_PACKAGE="${PYTHON}-venv"
+fi
+
 # ── System packages ────────────────────────────────────────────────────────
 step "System packages"
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libgomp1 libxrender1 libxext6 libsm6 \
-    python3-venv python3-pip git curl jq
+    "$PYTHON_VENV_PACKAGE" python3-pip git curl jq
 success "System packages ready."
 
 # ── Helper: set up one environment ────────────────────────────────────────
