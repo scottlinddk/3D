@@ -27,7 +27,11 @@ jobs:
         run: |
           cd ~/curveextract/dev
           .venv/bin/pip install -q --upgrade pip
-          .venv/bin/pip install -q -r backend/requirements.txt
+          if ! .venv/bin/pip install -q -r backend/requirements.txt; then
+            echo "Full dependency install failed; retrying without cadquery for Raspberry Pi compatibility"
+            grep -viE '^[[:space:]]*cadquery([[:space:]]*([<>=!~]=|@).*)?$' backend/requirements.txt > /tmp/backend-requirements-no-cadquery.txt
+            .venv/bin/pip install -q -r /tmp/backend-requirements-no-cadquery.txt
+          fi
 
       - name: Initialise database
         run: |
