@@ -1,10 +1,11 @@
 """Temporary file storage and processing state management."""
+import os
 import uuid
 import shutil
 from pathlib import Path
 from typing import Literal
 
-_BASE = Path("/tmp/curve_extraction")
+_BASE = Path(os.environ.get("CURVEEXTRACT_DATA_DIR", Path.home() / ".curveextract")) / "uploads"
 _BASE.mkdir(parents=True, exist_ok=True)
 
 Status = Literal["pending", "processing", "ready", "error"]
