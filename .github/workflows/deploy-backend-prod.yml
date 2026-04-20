@@ -1,0 +1,61 @@
+name: Deploy Backend — Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend-prod.yml"
+
+jobs:
+  deploy:
+    name: Deploy to Raspberry Pi (prod)
+    runs-on: [self-hosted, rpi]
+    environment: production
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+
+    steps:
+      - name: Pull latest code
+        run: |
+          cd ~/curveextract/prod
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Install / update dependencies
+        run: |
+          cd ~/curveextract/prod
+          .venv/bin/pip install -q --upgrade pip
+          if ! .venv/bin/pip install -q -r backend/requirements.txt; then
+            echo "Full dependency install failed; retrying without cadquery"
+            tmp_requirements="$(mktemp)"
+            grep -viE '^[[:space:]]*cadquery([[:space:]]*([<>=!~]=|@).*)?$' backend/requirements.txt > "$tmp_requirements"
+            .venv/bin/pip install -q -r "$tmp_requirements"
+            rm -f "$tmp_requirements"
+          fi
+
+      - name: Prepare backend data directory
+        run: |
+          sudo mkdir -p /var/lib/curveextract/prod
+          if [ -e /tmp/curve_extraction ] && [ ! -L /tmp/curve_extraction ]; then
+            sudo rm -rf /tmp/curve_extraction
+          fi
+          if [ -L /tmp/curve_extraction ]; then
+            sudo rm -f /tmp/curve_extraction
+          fi
+          sudo ln -s /var/lib/curveextract/prod /tmp/curve_extraction
+
+      - name: Initialise database
+        run: |
+          cd ~/curveextract/prod/backend
+          ../.venv/bin/python -c "from app.storage.db import init_db; init_db()"
+
+      - name: Restart service
+        run: sudo systemctl restart curveextract-prod
+
+      - name: Health check
+        run: |
+          sleep 3
+          curl -sf http://localhost:8000/health | python3 -c \
+            "import sys,json; d=json.load(sys.stdin); sys.exit(0 if d.get('status')=='ok' else 1)"
