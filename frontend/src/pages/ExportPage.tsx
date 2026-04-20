@@ -1,6 +1,6 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Download, RotateCcw, FileBox, BookmarkPlus, Check } from "lucide-react";
+import { Download, RotateCcw, FileBox, BookmarkPlus, Check, Link2 } from "lucide-react";
 import { useCreateModelMutation, useSaveHistoryMutation } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { GeneratingAnimation } from "@/components/GeneratingAnimation";
+import { buildShareUrl } from "@/lib/share";
 import type { PaperSize } from "@/api/schemas";
 
 const ProfileViewer = lazy(() =>
@@ -35,6 +36,7 @@ export function ExportPage() {
   const [format, setFormat] = useState<"stl" | "step">("stl");
   const [revolve, setRevolve] = useState(false);
   const [savedId, setSavedId] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { mutateAsync, isPending, data, error, reset } = useCreateModelMutation();
   const { mutateAsync: saveHistory, isPending: isSaving } = useSaveHistoryMutation();
@@ -59,6 +61,14 @@ export function ExportPage() {
     });
     setSavedId(entry.id);
   };
+
+  const handleCopyLink = useCallback(() => {
+    const url = buildShareUrl({ points, height, revolve, format, paper_size: paperSize });
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [points, height, revolve, format, paperSize]);
 
   const startOver = () => { reset(); navigate("/"); };
   const wide = isPending || !!data;
@@ -171,9 +181,15 @@ export function ExportPage() {
                 <a href={downloadUrl} download={data.filename} className="flex-1">
                   <Button variant="gradient" className="w-full gap-2">
                     <Download className="h-4 w-4" />
-                    Download {data.filename} (backend)
+                    Download {data.filename}
                   </Button>
                 </a>
+                <Button variant="outline" className="gap-2" onClick={handleCopyLink}>
+                  {copied
+                    ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+                    : <><Link2 className="h-4 w-4" /> Share</>
+                  }
+                </Button>
                 <Button
                   variant="outline"
                   className="gap-2"
@@ -214,6 +230,12 @@ export function ExportPage() {
                     Download {data.filename}
                   </Button>
                 </a>
+                <Button variant="outline" className="gap-2" onClick={handleCopyLink}>
+                  {copied
+                    ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+                    : <><Link2 className="h-4 w-4" /> Share</>
+                  }
+                </Button>
                 <Button
                   variant="outline"
                   className="gap-2"

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState } from "react";
-import { Trash2, RotateCcw, Clock } from "lucide-react";
+import { Trash2, RotateCcw, Clock, Link2, Check } from "lucide-react";
 import { useHistoryQuery, useDeleteHistoryMutation } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { buildShareUrl } from "@/lib/share";
 import type { HistoryEntry } from "@/api/schemas";
 
 const ProfileViewer = lazy(() =>
@@ -28,10 +29,25 @@ function formatDate(iso: string) {
 
 function HistoryCard({ entry, onDelete }: { entry: HistoryEntry; onDelete: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { mutate: del, isPending: isDeleting } = useDeleteHistoryMutation();
 
   const handleDelete = () => {
     del(entry.id, { onSuccess: onDelete });
+  };
+
+  const handleCopyLink = () => {
+    const url = buildShareUrl({
+      points: entry.points,
+      height: entry.height,
+      revolve: entry.revolve,
+      format: entry.format as "stl" | "step",
+      paper_size: entry.paper_size,
+    });
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
@@ -69,6 +85,17 @@ function HistoryCard({ entry, onDelete }: { entry: HistoryEntry; onDelete: () =>
                 {expanded ? "Hide" : "Load"}
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleCopyLink}
+            >
+              {copied
+                ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+                : <><Link2 className="h-3.5 w-3.5" /> Share</>
+              }
+            </Button>
             <Button
               variant="ghost"
               size="sm"
