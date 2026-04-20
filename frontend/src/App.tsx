@@ -6,6 +6,7 @@ import { CalibrationPage } from "@/pages/CalibrationPage";
 import { EditorPage } from "@/pages/EditorPage";
 import { ExportPage } from "@/pages/ExportPage";
 import { HistoryPage } from "@/pages/HistoryPage";
+import { SharePage } from "@/pages/SharePage";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/edit/:token" element={<EditorPage />} />
         <Route path="/export/:token" element={<ExportPage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/share" element={<SharePage />} />
       </Routes>
     </>
   );
