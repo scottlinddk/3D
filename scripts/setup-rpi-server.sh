@@ -90,14 +90,15 @@ setup_env() {
     "$VENV/bin/pip" install -q --upgrade pip
 
     info "Installing requirements (may take a while on ARM)…"
-    if "$VENV/bin/pip" install -q -r "$DIR/backend/requirements.txt" 2>/dev/null; then
-        success "Requirements installed."
-    else
-        warn "cadquery failed on ARM — retrying without it (STEP export disabled)."
-        grep -v '^cadquery' "$DIR/backend/requirements.txt" > /tmp/_req.txt
-        "$VENV/bin/pip" install -q -r /tmp/_req.txt
-        warn "Only STL export will work (client-side). STEP is skipped."
+    REQ_FILE="$DIR/backend/requirements.txt"
+    if [[ "$ARCH" == "aarch64" || "$ARCH" == "armv7l" ]]; then
+        warn "ARM detected — cadquery has no PyPI wheels for ARM. Skipping it."
+        warn "STEP file export will be unavailable; STL works entirely client-side."
+        grep -v '^cadquery' "$REQ_FILE" > /tmp/_req_arm.txt
+        REQ_FILE="/tmp/_req_arm.txt"
     fi
+    "$VENV/bin/pip" install -q -r "$REQ_FILE"
+    success "Requirements installed."
 
     # ── Data directory ───────────────────────────────────────────────────
     sudo mkdir -p "$DATA_DIR/uploads"
@@ -142,8 +143,8 @@ EOF
 }
 
 # ── Set up both environments ───────────────────────────────────────────────
-setup_env prod development main 8000
-setup_env dev  development development 8001
+setup_env prod main        8000
+setup_env dev  development 8001
 
 # ── Sudoers rule for Actions runner ───────────────────────────────────────
 step "Sudoers (passwordless service restart for runner)"
