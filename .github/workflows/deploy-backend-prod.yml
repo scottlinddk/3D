@@ -27,7 +27,13 @@ jobs:
         run: |
           cd ~/curveextract/prod
           .venv/bin/pip install -q --upgrade pip
-          .venv/bin/pip install -q -r backend/requirements.txt
+          if ! .venv/bin/pip install -q -r backend/requirements.txt; then
+            echo "Full dependency install failed; retrying without cadquery"
+            tmp_requirements="$(mktemp)"
+            grep -viE '^[[:space:]]*cadquery([[:space:]]*([<>=!~]=|@).*)?$' backend/requirements.txt > "$tmp_requirements"
+            .venv/bin/pip install -q -r "$tmp_requirements"
+            rm -f "$tmp_requirements"
+          fi
 
       - name: Prepare backend data directory
         run: |
