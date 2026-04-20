@@ -29,11 +29,21 @@ jobs:
           .venv/bin/pip install -q --upgrade pip
           .venv/bin/pip install -q -r backend/requirements.txt
 
+      - name: Prepare backend data directory
+        run: |
+          sudo mkdir -p /var/lib/curveextract/prod
+          if [ -e /tmp/curve_extraction ] && [ ! -L /tmp/curve_extraction ]; then
+            sudo rm -rf /tmp/curve_extraction
+          fi
+          if [ -L /tmp/curve_extraction ]; then
+            sudo rm -f /tmp/curve_extraction
+          fi
+          sudo ln -s /var/lib/curveextract/prod /tmp/curve_extraction
+
       - name: Initialise database
         run: |
           cd ~/curveextract/prod/backend
-          CURVEEXTRACT_DATA_DIR=/var/lib/curveextract/prod \
-            ../.venv/bin/python -c "from app.storage.db import init_db; init_db()"
+          ../.venv/bin/python -c "from app.storage.db import init_db; init_db()"
 
       - name: Restart service
         run: sudo systemctl restart curveextract-prod
