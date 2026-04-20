@@ -147,6 +147,7 @@ Type=simple
 User=$USER
 WorkingDirectory=$DIR/backend
 Environment=CURVEEXTRACT_DATA_DIR=$DATA_DIR
+PrivateTmp=true
 ExecStart=$VENV/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
 Restart=on-failure
 RestartSec=5
