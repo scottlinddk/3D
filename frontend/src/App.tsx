@@ -5,6 +5,7 @@ import { UploadPage } from "@/pages/UploadPage";
 import { CalibrationPage } from "@/pages/CalibrationPage";
 import { EditorPage } from "@/pages/EditorPage";
 import { ExportPage } from "@/pages/ExportPage";
+import { HistoryPage } from "@/pages/HistoryPage";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/calibrate/:token" element={<CalibrationPage />} />
         <Route path="/edit/:token" element={<EditorPage />} />
         <Route path="/export/:token" element={<ExportPage />} />
+        <Route path="/history" element={<HistoryPage />} />
       </Routes>
     </>
   );

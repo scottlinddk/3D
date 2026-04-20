@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 
 from app.models.schemas import ModelRequest, ModelResponse
@@ -26,7 +26,7 @@ def _run_generation(req: ModelRequest, out: str) -> None:
     response_model=ModelResponse,
     summary="Generate a 3-D model from a profile and return a download URL",
 )
-async def create_model(req: ModelRequest, request: Request) -> ModelResponse:
+async def create_model(req: ModelRequest) -> ModelResponse:
     img = image_path(req.token)
     if not img.exists():
         raise HTTPException(status_code=404, detail="Token not found.")
@@ -49,8 +49,10 @@ async def create_model(req: ModelRequest, request: Request) -> ModelResponse:
 
     set_status(req.token, "ready")
     filename = f"model_{req.token[:8]}.{req.format}"
-    base_url = str(request.base_url).rstrip("/")
-    url = f"{base_url}/api/download/{req.token}/{req.format}"
+    # Return a relative path so the browser resolves it against the page origin,
+    # routing through the correct proxy (Vite in dev, nginx in prod) instead of
+    # hitting the internal backend address directly.
+    url = f"/api/download/{req.token}/{req.format}"
 
     return ModelResponse(url=url, format=req.format, filename=filename)
 
@@ -62,5 +64,5 @@ async def download_model(token: str, fmt: str) -> FileResponse:
     path = output_path(token, fmt)
     if not path.exists():
         raise HTTPException(status_code=404, detail="File not found. Generate the model first.")
-    media = "model/stl" if fmt == "stl" else "application/step"
+    media = "application/octet-stream" if fmt == "stl" else "application/step"
     return FileResponse(str(path), media_type=media, filename=f"model.{fmt}")

@@ -1,19 +1,25 @@
 """Image processing pipeline: calibration + contour extraction."""
 from __future__ import annotations
 
-import math
 import cv2
 import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import splprep, splev
 
-# A4 sheet dimensions used for pixel→mm calibration
-A4_WIDTH_MM = 210.0
-A4_HEIGHT_MM = 297.0
+# Supported paper sizes (width_mm, height_mm) in portrait orientation
+PAPER_SIZES_MM: dict[str, tuple[float, float]] = {
+    "A3":      (297.0, 420.0),
+    "A4":      (210.0, 297.0),
+    "A5":      (148.0, 210.0),
+    "A6":      (105.0, 148.0),
+    "Letter":  (215.9, 279.4),
+    "Legal":   (215.9, 355.6),
+    "Tabloid": (279.4, 431.8),
+}
 
 
 def load_and_binarise(path: str) -> tuple[NDArray, NDArray]:
-    """Load image, return (bgr, binary) where object=white, bg=black."""
+    """Load image, return (bgr, binary) where bright regions = 255."""
     bgr = cv2.imread(path)
     if bgr is None:
         raise ValueError(f"Cannot read image at {path}")
@@ -43,11 +49,16 @@ def _order_points(pts: NDArray) -> NDArray:
     return ordered
 
 
-def detect_calibration_sheet(binary: NDArray) -> tuple[float, NDArray | None]:
+def detect_calibration_sheet(
+    binary: NDArray,
+    sheet_width_mm: float = 210.0,
+    sheet_height_mm: float = 297.0,
+) -> tuple[float, NDArray | None]:
     """
     Detect the largest rectangular contour (calibration sheet).
     Returns (pixels_per_mm, warped_binary | None).
-    If sheet not found returns (1.0, None) with a robust fallback.
+    The warped binary is perspective-corrected to just the sheet area.
+    Falls back to 96 DPI if no sheet is found.
     """
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
@@ -65,20 +76,15 @@ def detect_calibration_sheet(binary: NDArray) -> tuple[float, NDArray | None]:
         pts = _order_points(approx)
         tl, tr, br, bl = pts
 
-        width_px = max(
-            np.linalg.norm(br - bl),
-            np.linalg.norm(tr - tl),
-        )
-        height_px = max(
-            np.linalg.norm(tr - br),
-            np.linalg.norm(tl - bl),
-        )
+        width_px = float(max(np.linalg.norm(br - bl), np.linalg.norm(tr - tl)))
+        height_px = float(max(np.linalg.norm(tr - br), np.linalg.norm(tl - bl)))
 
-        # Determine orientation
+        # Choose orientation: portrait vs landscape
         if width_px > height_px:
-            ppm = width_px / A4_WIDTH_MM
+            # Landscape — long side matches the sheet's long dimension
+            ppm = width_px / sheet_height_mm
         else:
-            ppm = height_px / A4_HEIGHT_MM
+            ppm = height_px / sheet_height_mm
 
         dst = np.array(
             [
@@ -94,8 +100,24 @@ def detect_calibration_sheet(binary: NDArray) -> tuple[float, NDArray | None]:
         return ppm, warped
 
     # Fallback: assume 96 dpi → 3.78 px/mm
-    fallback_ppm = 96.0 / 25.4
-    return fallback_ppm, None
+    return 96.0 / 25.4, None
+
+
+def _find_object_contour(
+    binary: NDArray,
+    min_ratio: float = 0.005,
+    max_ratio: float = 0.90,
+) -> NDArray | None:
+    """Return the largest contour whose area falls in [min_ratio, max_ratio] of image."""
+    h, w = binary.shape
+    image_area = h * w
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+    for cnt in contours:
+        ratio = cv2.contourArea(cnt) / image_area
+        if min_ratio <= ratio <= max_ratio:
+            return cnt
+    return None
 
 
 def extract_object_contour(
@@ -104,28 +126,15 @@ def extract_object_contour(
     epsilon_mm: float = 0.5,
 ) -> list[list[float]]:
     """
-    Find the largest non-calibration contour, simplify with RDP, convert to mm.
+    Find the largest non-background contour, simplify with RDP, convert to mm.
     Returns [[x_mm, y_mm], ...].
     """
-    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours:
-        raise ValueError("No contours detected in the image.")
-
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)
-    # Skip the very largest if it covers > 80 % of the image (likely the calibration rect)
-    h, w = binary.shape
-    image_area = h * w
-    chosen = None
-    for cnt in contours:
-        if cv2.contourArea(cnt) < image_area * 0.80:
-            chosen = cnt
-            break
+    chosen = _find_object_contour(binary)
     if chosen is None:
-        chosen = contours[0]
+        raise ValueError("No contours detected in the image.")
 
     epsilon_px = epsilon_mm * pixels_per_mm
     simplified = cv2.approxPolyDP(chosen, epsilon_px, closed=True)
-
     pts_mm = (simplified.reshape(-1, 2) / pixels_per_mm).tolist()
     return pts_mm
 
@@ -141,15 +150,34 @@ def fit_bspline(points: list[list[float]], num_points: int = 200) -> list[list[f
     return list(zip(x_new.tolist(), y_new.tolist()))
 
 
-def process_image(image_path: str) -> dict:
+def process_image(image_path: str, paper_size: str = "A4") -> dict:
     """
     Full pipeline: load → binarise → calibrate → extract contour → optional spline.
     Returns a dict matching ContourResponse fields.
     """
+    dims = PAPER_SIZES_MM.get(paper_size, PAPER_SIZES_MM["A4"])
+    sheet_w_mm, sheet_h_mm = dims
+
     bgr, binary = load_and_binarise(image_path)
     h, w = binary.shape
-    pixels_per_mm, _ = detect_calibration_sheet(binary)
-    points = extract_object_contour(binary, pixels_per_mm)
+
+    pixels_per_mm, warped = detect_calibration_sheet(binary, sheet_w_mm, sheet_h_mm)
+
+    if warped is not None:
+        # The warped binary shows the calibration sheet region:
+        #   paper area → 255 (white), dark object on paper → 0 (black).
+        # Invert so the object becomes the white (foreground) region.
+        inv = cv2.bitwise_not(warped)
+        # Morphological open removes tiny warp-border artifacts.
+        kernel = np.ones((5, 5), np.uint8)
+        working = cv2.morphologyEx(inv, cv2.MORPH_OPEN, kernel)
+    else:
+        # No calibration sheet found — try the raw binary first, then its inverse.
+        working = binary
+        if _find_object_contour(working) is None:
+            working = cv2.bitwise_not(binary)
+
+    points = extract_object_contour(working, pixels_per_mm)
 
     spline: list[list[float]] | None = None
     if len(points) >= 4:

@@ -8,6 +8,12 @@ describe("DropZone", () => {
     expect(screen.getByText(/Drag & drop/i)).toBeInTheDocument();
   });
 
+  it("renders Browse files and Take photo buttons", () => {
+    render(<DropZone onFile={jest.fn()} />);
+    expect(screen.getByRole("button", { name: /Browse files/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Take photo/i })).toBeInTheDocument();
+  });
+
   it("calls onFile with a valid image", async () => {
     const onFile = jest.fn();
     render(<DropZone onFile={onFile} />);
@@ -17,11 +23,20 @@ describe("DropZone", () => {
     expect(onFile).toHaveBeenCalledWith(file);
   });
 
-  it("shows error for non-image file", async () => {
+  it("shows error for non-image file", () => {
     render(<DropZone onFile={jest.fn()} />);
     const input = document.querySelector("input[type=file]") as HTMLInputElement;
     const file = new File(["data"], "doc.pdf", { type: "application/pdf" });
-    await userEvent.upload(input, file);
+    // Use fireEvent to bypass the browser-level accept attribute filtering
+    fireEvent.change(input, { target: { files: [file] } });
     expect(screen.getByText(/Only image files/i)).toBeInTheDocument();
+  });
+
+  it("camera input has capture attribute for mobile", () => {
+    render(<DropZone onFile={jest.fn()} />);
+    const cameraInput = document.querySelector("input[capture]") as HTMLInputElement;
+    expect(cameraInput).not.toBeNull();
+    expect(cameraInput.getAttribute("capture")).toBe("environment");
+    expect(cameraInput.getAttribute("accept")).toBe("image/*");
   });
 });

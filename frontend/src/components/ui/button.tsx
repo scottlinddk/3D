@@ -9,12 +9,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gray-900 text-white shadow hover:bg-gray-700 active:scale-[0.98]",
+          "bg-gray-900 text-white shadow hover:bg-gray-700 active:scale-[0.98] dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100",
         gradient:
           "bg-gradient-to-r from-brand-pink via-brand-purple to-brand-blue text-white shadow-md hover:opacity-90 active:scale-[0.98]",
         outline:
-          "border border-gray-200 bg-white text-gray-900 hover:bg-gray-50",
-        ghost: "hover:bg-gray-100 text-gray-700",
+          "border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-[#2a2a2a] dark:bg-[#1c1c1c] dark:text-gray-50 dark:hover:bg-[#252525]",
+        ghost:
+          "hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-[#252525]",
         destructive: "bg-red-500 text-white hover:bg-red-600",
       },
       size: {
