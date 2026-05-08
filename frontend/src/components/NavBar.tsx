@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Sun, Moon, Bell, Search, Menu, X } from "lucide-react";
+import { Sun, Moon, Bell, Search, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const steps = [
   { label: "Upload", path: "/" },
@@ -15,7 +16,20 @@ const steps = [
 export function NavBar() {
   const { pathname } = useLocation();
   const { theme, toggle } = useTheme();
+  const { user, login, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -87,10 +101,45 @@ export function NavBar() {
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          {/* Avatar */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-purple to-brand-blue text-xs font-semibold text-white">
-            CE
-          </div>
+          {/* User avatar / login */}
+          {user ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                aria-label="User menu"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-purple to-brand-blue text-xs font-semibold text-white"
+              >
+                {initials(user.display_name || user.garmin_user_id)}
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-[#2a2a2a] dark:bg-[#1c1c1c]">
+                  <div className="border-b border-gray-100 px-4 py-2 dark:border-[#2a2a2a]">
+                    <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {user.display_name || "Garmin user"}
+                    </p>
+                    <p className="truncate text-xs text-gray-400">ID: {user.garmin_user_id}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setUserMenuOpen(false); logout(); }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-[#252525]"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={login}
+              className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+            >
+              Sign in
+            </button>
+          )}
 
           {/* Mobile hamburger button */}
           <button
@@ -130,4 +179,10 @@ export function NavBar() {
       )}
     </header>
   );
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase() || "G";
 }

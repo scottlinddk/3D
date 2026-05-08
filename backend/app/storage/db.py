@@ -32,6 +32,18 @@ def init_db() -> None:
                 created_at TEXT    NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS garmin_sessions (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_token   TEXT    NOT NULL UNIQUE,
+                garmin_user_id  TEXT    NOT NULL,
+                display_name    TEXT    NOT NULL DEFAULT '',
+                access_token    TEXT    NOT NULL,
+                refresh_token   TEXT    NOT NULL DEFAULT '',
+                expires_at      TEXT    NOT NULL,
+                created_at      TEXT    NOT NULL
+            )
+        """)
 
 
 def save_model(
@@ -73,3 +85,39 @@ def delete_model(entry_id: int) -> bool:
     with _connect() as conn:
         cur = conn.execute("DELETE FROM model_history WHERE id = ?", (entry_id,))
         return cur.rowcount > 0
+
+
+# ── Garmin sessions ───────────────────────────────────────────────────────────
+
+def create_session(
+    *,
+    session_token: str,
+    garmin_user_id: str,
+    display_name: str,
+    access_token: str,
+    refresh_token: str,
+    expires_at: str,
+) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO garmin_sessions
+                (session_token, garmin_user_id, display_name, access_token, refresh_token, expires_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (session_token, garmin_user_id, display_name, access_token, refresh_token, expires_at, now),
+        )
+
+
+def get_session(session_token: str) -> dict | None:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM garmin_sessions WHERE session_token = ?", (session_token,)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def delete_session(session_token: str) -> None:
+    with _connect() as conn:
+        conn.execute("DELETE FROM garmin_sessions WHERE session_token = ?", (session_token,))
